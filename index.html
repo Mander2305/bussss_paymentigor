@@ -4,185 +4,300 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Уведомление об оплате</title>
+<title>Оплата проезда по QR-коду | НСПК</title>
 <style>
   :root {
-    --bg: #f2f4f7; --card-bg: #ffffff; --text-main: #2c3e50; --text-muted: #667;
-    --accent: #0288d1; --btn-gradient: linear-gradient(90deg, #29b6f6, #0288d1);
-    --btn-shadow: rgba(41, 182, 246, 0.3); --border-color: #e0e0e0;
-    --input-bg: #f8f9fb; --shadow: 0 10px 40px rgba(0,0,0,0.06);
+    --nspk-blue: #0056b3;
+    --nspk-light: #0077cc;
+    --nspk-dark: #003d82;
+    --sbp-purple: #6b2fa0;
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #1a1a1a;
+    --text-muted: #6b7280;
+    --accent: #0056b3;
+    --btn-gradient: linear-gradient(135deg, #0056b3 0%, #0077cc 100%);
+    --btn-shadow: rgba(0, 86, 179, 0.3);
+    --border-color: #e5e7eb;
+    --input-bg: #f9fafb;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    --success: #10b981;
   }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
   body {
-    margin: 0; background: var(--bg); color: var(--text-main);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased; overflow-x: hidden;
     -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+    min-height: 100vh;
   }
-  .header-wave {
-    position: relative; height: 200px; overflow: hidden;
-    background: linear-gradient(160deg, #0a7cc0 0%, #1a9be8 50%, #3fb4f2 100%);
+
+  /* ===== ШАПКА НСПК ===== */
+  .nspk-header {
+    background: #fff; border-bottom: 1px solid var(--border-color);
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
-  .header-wave::before {
-    content: ""; position: absolute; top: -70px; left: -10%; width: 120%; height: 150px;
-    background: #0a6db0; border-radius: 0 0 50% 50% / 0 0 100% 100%; opacity: .85;
+  .nspk-logo { display: flex; align-items: center; gap: 10px; }
+  .nspk-logo-icon {
+    width: 36px; height: 36px; background: var(--btn-gradient); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 14px; letter-spacing: -0.5px;
   }
-  .header-wave::after {
-    content: ""; position: absolute; bottom: -12px; left: -10%; width: 120%; height: 110px;
-    background: #d8f0f8; border-radius: 50% 50% 0 0 / 100% 100% 0 0; z-index: 1;
+  .nspk-logo-text { font-size: 16px; font-weight: 700; color: var(--nspk-blue); }
+  .nspk-logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  .nspk-status {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--success); font-weight: 600;
   }
-  .header-content {
-    position: relative; z-index: 2; text-align: center; color: #fff;
-    font-size: 20px; font-weight: 500; padding-top: 95px; letter-spacing: .3px;
+  .nspk-status::before {
+    content: ""; width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+    animation: pulse 2s infinite;
   }
-  .receipt {
-    padding: 0 20px 40px; max-width: 440px; margin: -18px auto 0;
-    position: relative; z-index: 10; text-align: center;
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+  .main-content { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  /* ===== ЭКРАН СТАРТА ===== */
+  .start-card {
+    background: var(--card-bg); border-radius: 16px; padding: 32px 24px;
+    box-shadow: var(--shadow); text-align: center; border: 1px solid var(--border-color);
   }
-  .receipt-logo {
-    width: 92px; height: 92px; margin: 4px auto 26px; position: relative;
-    border-radius: 22px; background: linear-gradient(135deg, #5bc9fb, #0a84d1);
-    box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; overflow: hidden;
+  .start-card h1 { font-size: 22px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; }
+  .start-card p { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+
+  .qr-preview {
+    width: 200px; height: 200px; margin: 0 auto 24px; background: var(--input-bg);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    border: 2px dashed var(--border-color);
   }
-  .receipt-logo::before {
-    content: ""; position: absolute; top: -18px; left: -18px; width: 52px; height: 52px;
-    background: #fff; border-radius: 14px;
+  .qr-preview-icon { font-size: 64px; opacity: 0.3; }
+
+  .start-btn {
+    width: 100%; border: 0; border-radius: 12px; padding: 16px; font-size: 16px; font-weight: 600;
+    color: #fff; background: var(--btn-gradient); cursor: pointer; box-shadow: 0 4px 12px var(--btn-shadow);
+    transition: transform 0.2s, opacity 0.2s;
   }
-  .receipt-logo span {
-    position: relative; z-index: 2; font-size: 36px; font-weight: 900; color: #fff;
-    letter-spacing: -2px; text-shadow: 0 2px 6px rgba(0,0,0,.15);
-  }
-  .receipt-status { font-size: 17px; color: #333; margin: 0 0 28px; }
-  .receipt-route  { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
-  .receipt-price  { font-size: 48px; font-weight: 800; color: var(--text-main); letter-spacing: -1px; margin: 0 0 24px; }
-  .receipt-info   { font-size: 17px; color: #3a3a3a; line-height: 1.6; }
-  .elapsed-label  { margin-top: 28px; font-size: 17px; color: #333; }
-  .elapsed-timer  {
-    font-size: 34px; font-weight: 800; color: var(--text-main);
-    margin: 8px 0 24px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
-  }
-  .qr-real { width: 300px; height: 300px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; }
-  .garage-link {
-    display: inline-block; margin-top: 14px; font-size: 14px; color: var(--text-muted);
-    background: none; border: none; text-decoration: underline; cursor: pointer; padding: 8px;
-  }
-  .telegram-link {
-    display: inline-block; margin-top: 18px; padding: 12px 28px;
-    background: var(--btn-gradient); color: #fff; text-decoration: none;
-    border-radius: 12px; font-size: 16px; font-weight: 600;
-    box-shadow: 0 4px 15px var(--btn-shadow);
-  }
-  .screen {
-    min-height: 100vh; background: var(--bg); display: flex;
-    align-items: center; justify-content: center; padding: 24px;
-  }
-  .card {
-    width: 100%; max-width: 440px; background: var(--card-bg); border-radius: 24px;
-    padding: 40px 28px; box-shadow: var(--shadow); text-align: center; border:1px solid var(--border-color);
-  }
-  .card h2 { margin: 0 0 24px; font-size: 26px; font-weight: 700; }
-  .card p  { margin: 0 0 20px; color: var(--text-muted); font-size: 16px; }
-  .pay-btn {
-    width: 100%; border: 0; border-radius: 16px; padding: 18px 20px; font-size: 20px; font-weight: 600;
-    color: #fff; background: var(--btn-gradient); cursor: pointer; box-shadow: 0 6px 20px var(--btn-shadow); margin-bottom: 20px;
-  }
+  .start-btn:active { transform: scale(0.98); opacity: 0.9; }
+
   .progress-wrap { display: none; margin-top: 20px; }
-  .progress-track { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
-  .progress-bar { width: 0%; height: 100%; background: var(--btn-gradient); transition: width .08s linear; }
-  .progress-text { margin-top: 10px; font-size: 15px; color: var(--text-muted); }
-  .type-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .type-btn, .route-btn {
-    border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 12px; font-size: 17px;
-    cursor: pointer; background: var(--input-bg); color: var(--text-main); font-weight: 600;
+  .progress-track { height: 6px; background: var(--input-bg); border-radius: 3px; overflow: hidden; }
+  .progress-bar { width: 0%; height: 100%; background: var(--btn-gradient); transition: width 0.1s linear; }
+  .progress-text { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+
+  /* ===== ВЫБОР ТРАНСПОРТА ===== */
+  .transport-card {
+    background: var(--card-bg); border-radius: 16px; padding: 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border-color);
   }
-  .type-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .route-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .result-title { font-size: 32px; line-height: 1.1; font-weight: 800; margin: 0 0 16px; }
-  .result-subtitle { color: var(--text-muted); margin-bottom: 24px; font-size: 17px; }
+  .transport-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .transport-card > p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .type-btn {
+    border: 2px solid var(--border-color); border-radius: 12px; padding: 14px; font-size: 15px;
+    cursor: pointer; background: var(--input-bg); color: var(--text-main); font-weight: 600;
+    transition: all 0.2s; text-align: center;
+  }
+  .type-btn.active { background: var(--nspk-blue); color: #fff; border-color: var(--nspk-blue); }
+
+  .route-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .route-btn {
+    border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 8px; font-size: 14px;
+    cursor: pointer; background: var(--input-bg); color: var(--text-main); font-weight: 600;
+    transition: all 0.2s;
+  }
+  .route-btn:active { transform: scale(0.97); }
+
   .hidden { display: none !important; }
+
+  /* ===== СТРАНИЦА ОПЛАТЫ (стиль НСПК) ===== */
+  .payment-page { display: none; }
+  .payment-page.active { display: block; }
+
+  .payment-header {
+    background: var(--btn-gradient); color: #fff; padding: 24px 20px;
+    border-radius: 0 0 20px 20px; text-align: center;
+  }
+  .payment-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .payment-header p { font-size: 13px; opacity: 0.9; }
+
+  .payment-body { padding: 20px 16px; }
+
+  .info-card {
+    background: var(--card-bg); border-radius: 16px; padding: 20px;
+    box-shadow: var(--shadow); border: 1px solid var(--border-color); margin-bottom: 16px;
+  }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-size: 14px; color: var(--text-muted); }
+  .info-value { font-size: 14px; font-weight: 600; color: var(--text-main); }
+
+  .price-display {
+    text-align: center; padding: 16px 0;
+  }
+  .price-amount { font-size: 48px; font-weight: 800; color: var(--nspk-blue); letter-spacing: -1px; }
+  .price-currency { font-size: 24px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
+
+  .qr-section {
+    background: var(--card-bg); border-radius: 16px; padding: 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border-color); text-align: center; margin-bottom: 16px;
+  }
+  .qr-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); }
+  .qr-container {
+    width: 240px; height: 240px; margin: 0 auto 16px; background: #fff;
+    border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qr-container canvas, .qr-container img { display: block; max-width: 100%; }
+
+  .timer-display {
+    text-align: center; padding: 12px; background: var(--input-bg); border-radius: 10px;
+    font-size: 14px; color: var(--text-muted);
+  }
+  .timer-value { font-size: 20px; font-weight: 700; color: var(--nspk-blue); font-variant-numeric: tabular-nums; }
+
+  .action-buttons { display: flex; flex-direction: column; gap: 10px; }
+  .action-btn {
+    width: 100%; border: 0; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; text-align: center; text-decoration: none; display: block;
+  }
+  .action-btn.primary {
+    background: var(--btn-gradient); color: #fff; box-shadow: 0 4px 12px var(--btn-shadow);
+  }
+  .action-btn.secondary {
+    background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color);
+  }
+  .action-btn:active { transform: scale(0.98); }
+
+  .telegram-btn {
+    background: linear-gradient(135deg, #0088cc 0%, #00a8e8 100%);
+    color: #fff; box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  }
+
+  /* ===== МОДАЛЬНОЕ ОКНО ===== */
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
     align-items: center; justify-content: center; z-index: 1000;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   }
   .modal-overlay.open { display: flex; }
   .modal-card {
-    background: #fff; border: 1px solid var(--border-color); border-radius: 20px;
-    padding: 26px; width: 90%; max-width: 340px; text-align: center; box-shadow: var(--shadow);
+    background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 360px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   }
-  .modal-card h3 { margin: 0 0 12px; font-size: 22px; }
-  .modal-card p { margin: 0 0 20px; font-size: 15px; color: var(--text-muted); }
+  .modal-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-card p { font-size: 14px; color: var(--text-muted); margin-bottom: 16px; }
   .modal-input {
-    width: 100%; padding: 16px; font-size: 18px; border: 2px solid var(--border-color); border-radius: 14px;
-    outline: none; margin-bottom: 16px; text-align: center; background: var(--input-bg);
+    width: 100%; padding: 14px; font-size: 16px; border: 2px solid var(--border-color); border-radius: 10px;
+    outline: none; margin-bottom: 12px; text-align: center; background: var(--input-bg);
   }
-  .modal-actions { display: flex; gap: 12px; }
-  .modal-btn { flex: 1; padding: 15px; border: none; border-radius: 14px; font-size: 17px; font-weight: 600; cursor: pointer; }
+  .modal-input:focus { border-color: var(--nspk-blue); }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
   .modal-btn.cancel { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
   .modal-btn.save { background: var(--btn-gradient); color: #fff; }
-  .modal-error { color: #ff4d4d; font-size: 14px; margin-bottom: 12px; min-height: 18px; font-weight: 600; }
+  .modal-error { color: #ef4444; font-size: 13px; margin-bottom: 12px; min-height: 18px; font-weight: 600; }
+
+  /* ===== ФУТЕР ===== */
+  .footer {
+    text-align: center; padding: 20px; font-size: 12px; color: var(--text-muted);
+    border-top: 1px solid var(--border-color); margin-top: 40px;
+  }
+  .footer a { color: var(--nspk-blue); text-decoration: none; }
 </style>
 </head>
 <body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
 
-  <section id="demoScreen" class="screen">
-    <div class="card">
-      <h2>Оплата проезда</h2>
-      <p>Нажмите кнопку ниже, чтобы запустить оплату проезда</p>
-      <button id="payButton" class="pay-btn">Оплатить</button>
+  <!-- Шапка НСПК -->
+  <header class="nspk-header">
+    <div class="nspk-logo">
+      <div class="nspk-logo-icon">QR</div>
+      <div>
+        <div class="nspk-logo-text">Билет НСПК</div>
+        <div class="nspk-logo-sub">Оплата проезда по QR-коду</div>
+      </div>
+    </div>
+    <div class="nspk-status">Система активна</div>
+  </header>
+
+  <!-- Основной контент -->
+  <div class="main-content">
+
+    <!-- Экран 1: Старт -->
+    <div id="startScreen" class="start-card">
+      <h1>Оплата проезда по QR-коду</h1>
+      <p>Отсканируйте QR-код в транспорте или выберите маршрут вручную для оплаты через Систему быстрых платежей (СБП)</p>
+      <div class="qr-preview">
+        <div class="qr-preview-icon">📱</div>
+      </div>
+      <button id="startPayBtn" class="start-btn">Начать оплату</button>
       <div id="progressWrap" class="progress-wrap">
         <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
         <div id="progressText" class="progress-text">Подготовка…</div>
       </div>
     </div>
-  </section>
 
-  <section id="resultScreen" class="screen hidden">
-    <div class="card">
-      <div class="result-title">Процесс
-выполнен</div>
-      <div class="result-subtitle">Переход к выбору транспорта…</div>
-    </div>
-  </section>
-
-  <section id="selectorScreen" class="screen hidden">
-    <div class="card">
+    <!-- Экран 2: Выбор транспорта -->
+    <div id="transportScreen" class="transport-card hidden">
       <h2>Выберите транспорт</h2>
       <p>Сначала выберите тип, затем маршрут</p>
-      <div class="type-buttons">
-        <button class="type-btn" data-type="bus">Автобус</button>
-        <button class="type-btn" data-type="trolleybus">Троллейбус</button>
+      <div class="type-selector">
+        <button class="type-btn" data-type="bus">🚌 Автобус</button>
+        <button class="type-btn" data-type="trolleybus">🚎 Троллейбус</button>
       </div>
-      <div id="routeButtons" class="route-buttons hidden"></div>
+      <div id="routeButtons" class="route-grid hidden"></div>
     </div>
-  </section>
 
-  <div id="receiptPage" class="hidden">
-    <header class="header-wave">
-      <div class="header-content">— Уведомление об оплате —</div>
-    </header>
-    <main class="receipt">
-      <div class="receipt-logo"><span>QR</span></div>
-      <div class="receipt-status">Ваш проезд успешно оплачен!</div>
-      <div class="receipt-route" id="routeTitle">Автобус: №10А</div>
-      <div class="receipt-price">53 ₽</div>
-      <div class="receipt-info">
-        <span id="payDate">—</span>
-
-        Т/С: <span id="vehicleNumber">—</span>
+    <!-- Страница оплаты -->
+    <div id="paymentPage" class="payment-page">
+      <div class="payment-header">
+        <h1 id="routeTitle">Автобус №10А</h1>
+        <p>Оплата через СБП</p>
       </div>
-      <div class="elapsed-label">С момента оплаты прошло:</div>
-      <div class="elapsed-timer" id="timer">0:00:00</div>
-      <div class="qr-real" id="qrBox"></div>
-      <div><button id="openGarageModalBtn" class="garage-link">Спросили т/с?</button></div>
-      <div><a href="https://t.me/CHEKUNEC40MG" target="_blank" rel="noopener" class="telegram-link">Написать в Telegram</a></div>
-    </main>
+
+      <div class="payment-body">
+        <div class="info-card">
+          <div class="price-display">
+            <span class="price-amount">53</span>
+            <span class="price-currency">₽</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Дата и время</span>
+            <span class="info-value" id="payDate">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Транспортное средство</span>
+            <span class="info-value" id="vehicleNumber">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Статус</span>
+            <span class="info-value" style="color: var(--success);">✓ Оплачено</span>
+          </div>
+        </div>
+
+        <div class="qr-section">
+          <h3>QR-код для проверки</h3>
+          <div class="qr-container" id="qrBox"></div>
+          <div class="timer-display">
+            Время с момента оплаты: <span class="timer-value" id="timer">0:00:00</span>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button id="openGarageModalBtn" class="action-btn secondary">Указать номер Т/С</button>
+          <a href="https://t.me/CHEKUNEC40MG" target="_blank" rel="noopener" class="action-btn telegram-btn">Написать в Telegram</a>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <!-- Модальное окно Т/С -->
   <div id="garageModal" class="modal-overlay">
     <div class="modal-card">
-      <h3>Т/С (Гаражный номер)</h3>
-      <p>Введите номер, чтобы добавить его к чеку</p>
+      <h3>Номер транспортного средства</h3>
+      <p>Введите гаражный номер (3-5 цифр)</p>
       <input id="modalGarageInput" class="modal-input" type="tel" inputmode="numeric" placeholder="Например: 1107" maxlength="5">
       <div id="modalGarageError" class="modal-error"></div>
       <div class="modal-actions">
@@ -191,6 +306,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Футер -->
+  <footer class="footer">
+    © 2026 НСПК. Оплата проезда по QR-коду через СБП<br>
+    <a href="https://sbp.nspk.ru">Система быстрых платежей</a>
+  </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
@@ -215,11 +336,10 @@
      ОСНОВНАЯ ЛОГИКА САЙТА
      ============================================ */
   document.addEventListener('DOMContentLoaded', function() {
-    const demoScreen = document.getElementById('demoScreen');
-    const resultScreen = document.getElementById('resultScreen');
-    const selectorScreen = document.getElementById('selectorScreen');
-    const receiptPage = document.getElementById('receiptPage');
-    const payButton = document.getElementById('payButton');
+    const startScreen = document.getElementById('startScreen');
+    const transportScreen = document.getElementById('transportScreen');
+    const paymentPage = document.getElementById('paymentPage');
+    const startPayBtn = document.getElementById('startPayBtn');
     const progressWrap = document.getElementById('progressWrap');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
@@ -231,9 +351,11 @@
     const qrBox = document.getElementById('qrBox');
     const typeButtons = document.querySelectorAll('.type-btn');
 
-    payButton.addEventListener('click', function() {
-      payButton.disabled = true; payButton.style.opacity = '.65';
-      progressWrap.style.display = 'block';const stages = ['Подготовка…', 'Проверка данных…', 'Завершение…'];
+    // Кнопка "Начать оплату"
+    startPayBtn.addEventListener('click', function() {
+      startPayBtn.disabled = true; startPayBtn.style.opacity = '.65';
+      progressWrap.style.display = 'block';
+      const stages = ['Подготовка…', 'Проверка данных…', 'Завершение…'];
       let p = 0;
       const iv = setInterval(function() {
         p += 2; progressBar.style.width = p + '%';
@@ -241,17 +363,14 @@
         if (p >= 100) {
           clearInterval(iv);
           setTimeout(function() {
-            demoScreen.style.display = 'none';
-            resultScreen.classList.remove('hidden');
-            setTimeout(function() {
-              resultScreen.classList.add('hidden');
-              selectorScreen.classList.remove('hidden');
-            }, 1500);
+            startScreen.classList.add('hidden');
+            transportScreen.classList.remove('hidden');
           }, 400);
         }
       }, 35);
     });
 
+    // Выбор транспорта
     const transportRoutes = { bus: ['18','1','10А','27','5','33','29','11'], trolleybus: ['3','6','4','10'] };
     const typeLabels = { bus: 'Автобус', trolleybus: 'Троллейбус' };
     let currentRoute = '10А', currentType = 'bus';
@@ -268,11 +387,11 @@
           rb.textContent = typeLabels[type] + ' ' + num;
           rb.addEventListener('click', function() {
             currentType = type; currentRoute = num;
-            routeTitle.textContent = typeLabels[type] + ': №' + num;
+            routeTitle.textContent = typeLabels[type] + ' №' + num;
             vehicleNumber.textContent = '—';
-            document.getElementById('openGarageModalBtn').textContent = 'Спросили т/с?';
-            selectorScreen.classList.add('hidden');
-            receiptPage.classList.remove('hidden');
+            document.getElementById('openGarageModalBtn').textContent = 'Указать номер Т/С';
+            transportScreen.classList.add('hidden');
+            paymentPage.classList.add('active');
             payDate.textContent = formatMoscowDate(new Date());
             window.__payTime = Date.now();
             startElapsedTimer();
@@ -284,6 +403,7 @@
       });
     });
 
+    // Таймер
     let timerInterval;
     function startElapsedTimer() {
       clearInterval(timerInterval);
@@ -298,21 +418,23 @@
       timerInterval = setInterval(tick, 1000);
     }
 
+    // QR-код
     function renderQR() {
       qrBox.innerHTML = '';
       const payload = 'PAYMENT|' + typeLabels[currentType] + ' ' + currentRoute + '|53RUB|TS:' + vehicleNumber.textContent + '|' + payDate.textContent;
       if (window.QRCode) {
-        new QRCode(qrBox, { text: payload, width: 300, height: 300, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(qrBox, { text: payload, width: 220, height: 220, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
       } else {
-        const c = document.createElement('canvas'); c.width = c.height = 300;
-        const ctx = c.getContext('2d'); const n = 33, cell = 300/n; let seed = 20261028;
+        const c = document.createElement('canvas'); c.width = c.height = 220;
+        const ctx = c.getContext('2d'); const n = 33, cell = 220/n; let seed = 20261028;
         const rand = function() { return (seed = (seed*1103515245+12345) & 0x7fffffff) / 0x7fffffff; };
-        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,300,300); ctx.fillStyle = '#111';
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,220,220); ctx.fillStyle = '#111';
         for (let y=0;y<n;y++) for (let x=0;x<n;x++) if (rand()>.5) ctx.fillRect(x*cell,y*cell,cell,cell);
         qrBox.appendChild(c);
       }
     }
 
+    // Модалка Т/С
     const garageModal = document.getElementById('garageModal');
     const garageInput = document.getElementById('modalGarageInput');
     const garageError = document.getElementById('modalGarageError');
@@ -329,10 +451,11 @@
       const val = garageInput.value.trim();
       if (!/^\d{3,5}$/.test(val)) { garageError.textContent = 'Номер должен содержать от 3 до 5 цифр'; return; }
       vehicleNumber.textContent = val;
-      document.getElementById('openGarageModalBtn').textContent = 'Изменить т/с (' + val + ')';
+      document.getElementById('openGarageModalBtn').textContent = 'Изменить номер Т/С (' + val + ')';
       renderQR(); closeGarage();
     });
 
+    // Формат даты
     function formatMoscowDate(d) {
       const pad = function(n) { return String(n).padStart(2,'0'); };
       const msk = new Date(d.toLocaleString('en-US',{timeZone:'Europe/Moscow'}));

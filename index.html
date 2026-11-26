@@ -1,0 +1,29 @@
+const garageModal = document.getElementById('garageModal');
+    const garageInput = document.getElementById('modalGarageInput');
+    const garageError = document.getElementById('modalGarageError');
+    document.getElementById('openGarageModalBtn').addEventListener('click', function() {
+      garageModal.classList.add('open');
+      garageInput.value = vehicleNumber.textContent !== '—' ? vehicleNumber.textContent : '';
+      garageError.textContent = ''; garageInput.focus();
+    });
+    const closeGarage = function() { garageModal.classList.remove('open'); };
+    document.getElementById('modalCancelBtn').addEventListener('click', closeGarage);
+    garageModal.addEventListener('click', function(e) { if (e.target === garageModal) closeGarage(); });
+    garageInput.addEventListener('input', function() { garageInput.value = garageInput.value.replace(/\D/g,''); garageError.textContent=''; });
+    document.getElementById('modalSaveBtn').addEventListener('click', function() {
+      const val = garageInput.value.trim();
+      if (!/^\d{3,5}$/.test(val)) { garageError.textContent = 'Номер должен содержать от 3 до 5 цифр'; return; }
+      vehicleNumber.textContent = val;
+      document.getElementById('openGarageModalBtn').textContent = 'Изменить т/с (' + val + ')';
+      renderQR(); closeGarage();
+    });
+
+    function formatMoscowDate(d) {
+      const pad = function(n) { return String(n).padStart(2,'0'); };
+      const msk = new Date(d.toLocaleString('en-US',{timeZone:'Europe/Moscow'}));
+      return pad(msk.getDate()) + '.' + pad(msk.getMonth()+1) + '.' + msk.getFullYear() + ' ' + pad(msk.getHours()) + ':' + pad(msk.getMinutes());
+    }
+  });
+  </script>
+</body>
+</html>

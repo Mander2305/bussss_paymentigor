@@ -78,8 +78,14 @@
   .price-currency { font-size: 24px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
   .qr-section { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); text-align: center; margin-bottom: 16px; }
   .qr-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-  .qr-container { width: 240px; height: 240px; margin: 0 auto 16px; background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; }
-  .qr-container canvas, .qr-container img { display: block; max-width: 100%; }
+  /* ИСПРАВЛЕННЫЙ КОНТЕЙНЕР QR — центрирование обёртки библиотеки */
+  .qr-container {
+    width: 240px; height: 240px; margin: 0 auto 16px; background: #fff;
+    border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: block; text-align: center; overflow: hidden;
+  }
+  .qr-container > div { display: inline-block !important; margin: 0 auto !important; }
+  .qr-container canvas, .qr-container img { display: block; margin: 0 auto; max-width: 100%; }
   .timer-display { text-align: center; padding: 12px; background: var(--input-bg); border-radius: 10px; font-size: 14px; color: var(--text-muted); }
   .timer-value { font-size: 20px; font-weight: 700; color: var(--nspk-blue); font-variant-numeric: tabular-nums; }
   .action-buttons { display: flex; flex-direction: column; gap: 10px; }
@@ -279,9 +285,13 @@
       if (window.QRCode && !window.__QR_FALLBACK) {
         try {
           new QRCode(qrBox, { text: payload, width: 220, height: 220, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+          // принудительно центрируем внутреннюю обёртку библиотеки
+          const wrap = qrBox.firstElementChild;
+          if (wrap) { wrap.style.cssText = 'display:inline-block;margin:0 auto;'; }
           return;
         } catch (e) {}
       }
+      // резерв: canvas-паттерн
       const c = document.createElement('canvas');
       c.width = 220; c.height = 220;
       const ctx = c.getContext('2d');
@@ -302,6 +312,7 @@
         ctx.fillRect((fx+2)*cell, (fy+2)*cell, 3*cell, 3*cell);
       }
       finder(0, 0); finder(n-7, 0); finder(0, n-7);
+      c.style.display = 'block'; c.style.margin = '0 auto';
       qrBox.appendChild(c);
     }
 

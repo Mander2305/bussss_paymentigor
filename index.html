@@ -1,4 +1,319 @@
-const garageModal = document.getElementById('garageModal');
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Уведомление об оплате</title>
+<style>
+  :root {
+    --bg: #f2f4f7; --card-bg: #ffffff; --text-main: #2c3e50; --text-muted: #667;
+    --accent: #0288d1; --btn-gradient: linear-gradient(90deg, #29b6f6, #0288d1);
+    --btn-shadow: rgba(41, 182, 246, 0.3); --border-color: #e0e0e0;
+    --input-bg: #f8f9fb; --shadow: 0 10px 40px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+  }
+  .header-wave {
+    position: relative; height: 200px; overflow: hidden;
+    background: linear-gradient(160deg, #0a7cc0 0%, #1a9be8 50%, #3fb4f2 100%);
+  }
+  .header-wave::before {
+    content: ""; position: absolute; top: -70px; left: -10%; width: 120%; height: 150px;
+    background: #0a6db0; border-radius: 0 0 50% 50% / 0 0 100% 100%; opacity: .85;
+  }
+  .header-wave::after {
+    content: ""; position: absolute; bottom: -12px; left: -10%; width: 120%; height: 110px;
+    background: #d8f0f8; border-radius: 50% 50% 0 0 / 100% 100% 0 0; z-index: 1;
+  }
+  .header-content {
+    position: relative; z-index: 2; text-align: center; color: #fff;
+    font-size: 20px; font-weight: 500; padding-top: 95px; letter-spacing: .3px;
+  }
+  .receipt {
+    padding: 0 20px 40px; max-width: 440px; margin: -18px auto 0;
+    position: relative; z-index: 10; text-align: center;
+  }
+  .receipt-logo {
+    width: 92px; height: 92px; margin: 4px auto 26px; position: relative;
+    border-radius: 22px; background: linear-gradient(135deg, #5bc9fb, #0a84d1);
+    box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .receipt-logo::before {
+    content: ""; position: absolute; top: -18px; left: -18px; width: 52px; height: 52px;
+    background: #fff; border-radius: 14px;
+  }
+  .receipt-logo span {
+    position: relative; z-index: 2; font-size: 36px; font-weight: 900; color: #fff;
+    letter-spacing: -2px; text-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .receipt-status { font-size: 17px; color: #333; margin: 0 0 28px; }
+  .receipt-route  { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+  .receipt-price  { font-size: 48px; font-weight: 800; color: var(--text-main); letter-spacing: -1px; margin: 0 0 24px; }
+  .receipt-info   { font-size: 17px; color: #3a3a3a; line-height: 1.6; }
+  .elapsed-label  { margin-top: 28px; font-size: 17px; color: #333; }
+  .elapsed-timer  {
+    font-size: 34px; font-weight: 800; color: var(--text-main);
+    margin: 8px 0 24px; letter-spacing: 1px; font-variant-numeric: tabular-nums;
+  }
+  .qr-real { width: 300px; height: 300px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; }
+  .garage-link {
+    display: inline-block; margin-top: 14px; font-size: 14px; color: var(--text-muted);
+    background: none; border: none; text-decoration: underline; cursor: pointer; padding: 8px;
+  }
+  .telegram-link {
+    display: inline-block; margin-top: 18px; padding: 12px 28px;
+    background: var(--btn-gradient); color: #fff; text-decoration: none;
+    border-radius: 12px; font-size: 16px; font-weight: 600;
+    box-shadow: 0 4px 15px var(--btn-shadow);
+  }
+  .screen {
+    min-height: 100vh; background: var(--bg); display: flex;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .card {
+    width: 100%; max-width: 440px; background: var(--card-bg); border-radius: 24px;
+    padding: 40px 28px; box-shadow: var(--shadow); text-align: center; border:1px solid var(--border-color);
+  }
+  .card h2 { margin: 0 0 24px; font-size: 26px; font-weight: 700; }
+  .card p  { margin: 0 0 20px; color: var(--text-muted); font-size: 16px; }
+  .pay-btn {
+    width: 100%; border: 0; border-radius: 16px; padding: 18px 20px; font-size: 20px; font-weight: 600;
+    color: #fff; background: var(--btn-gradient); cursor: pointer; box-shadow: 0 6px 20px var(--btn-shadow); margin-bottom: 20px;
+  }
+  .progress-wrap { display: none; margin-top: 20px; }
+  .progress-track { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+  .progress-bar { width: 0%; height: 100%; background: var(--btn-gradient); transition: width .08s linear; }
+  .progress-text { margin-top: 10px; font-size: 15px; color: var(--text-muted); }
+  .type-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .type-btn, .route-btn {
+    border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 12px; font-size: 17px;
+    cursor: pointer; background: var(--input-bg); color: var(--text-main); font-weight: 600;
+  }
+  .type-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .route-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .result-title { font-size: 32px; line-height: 1.1; font-weight: 800; margin: 0 0 16px; }
+  .result-subtitle { color: var(--text-muted); margin-bottom: 24px; font-size: 17px; }
+  .hidden { display: none !important; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none;
+    align-items: center; justify-content: center; z-index: 1000;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-card {
+    background: #fff; border: 1px solid var(--border-color); border-radius: 20px;
+    padding: 26px; width: 90%; max-width: 340px; text-align: center; box-shadow: var(--shadow);
+  }
+  .modal-card h3 { margin: 0 0 12px; font-size: 22px; }
+  .modal-card p { margin: 0 0 20px; font-size: 15px; color: var(--text-muted); }
+  .modal-input {
+    width: 100%; padding: 16px; font-size: 18px; border: 2px solid var(--border-color); border-radius: 14px;
+    outline: none; margin-bottom: 16px; text-align: center; background: var(--input-bg);
+  }
+  .modal-actions { display: flex; gap: 12px; }
+  .modal-btn { flex: 1; padding: 15px; border: none; border-radius: 14px; font-size: 17px; font-weight: 600; cursor: pointer; }
+  .modal-btn.cancel { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
+  .modal-btn.save { background: var(--btn-gradient); color: #fff; }
+  .modal-error { color: #ff4d4d; font-size: 14px; margin-bottom: 12px; min-height: 18px; font-weight: 600; }
+</style>
+</head>
+<body oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+
+  <section id="demoScreen" class="screen">
+    <div class="card">
+      <h2>Оплата проезда</h2>
+      <p>Нажмите кнопку ниже, чтобы запустить оплату проезда</p>
+      <button id="payButton" class="pay-btn">Оплатить</button>
+      <div id="progressWrap" class="progress-wrap">
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="progressText" class="progress-text">Подготовка…</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultScreen" class="screen hidden">
+    <div class="card">
+      <div class="result-title">Процесс
+выполнен</div>
+      <div class="result-subtitle">Переход к выбору транспорта…</div>
+    </div>
+  </section>
+
+  <section id="selectorScreen" class="screen hidden">
+    <div class="card">
+      <h2>Выберите транспорт</h2>
+      <p>Сначала выберите тип, затем маршрут</p>
+      <div class="type-buttons">
+        <button class="type-btn" data-type="bus">Автобус</button>
+        <button class="type-btn" data-type="trolleybus">Троллейбус</button>
+      </div>
+      <div id="routeButtons" class="route-buttons hidden"></div>
+    </div>
+  </section>
+
+  <div id="receiptPage" class="hidden">
+    <header class="header-wave">
+      <div class="header-content">— Уведомление об оплате —</div>
+    </header>
+    <main class="receipt">
+      <div class="receipt-logo"><span>QR</span></div>
+      <div class="receipt-status">Ваш проезд успешно оплачен!</div>
+      <div class="receipt-route" id="routeTitle">Автобус: №10А</div>
+      <div class="receipt-price">53 ₽</div>
+      <div class="receipt-info">
+        <span id="payDate">—</span>
+
+        Т/С: <span id="vehicleNumber">—</span>
+      </div>
+      <div class="elapsed-label">С момента оплаты прошло:</div>
+      <div class="elapsed-timer" id="timer">0:00:00</div>
+      <div class="qr-real" id="qrBox"></div>
+      <div><button id="openGarageModalBtn" class="garage-link">Спросили т/с?</button></div>
+      <div><a href="https://t.me/CHEKUNEC40MG" target="_blank" rel="noopener" class="telegram-link">Написать в Telegram</a></div>
+    </main>
+  </div>
+
+  <div id="garageModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>Т/С (Гаражный номер)</h3>
+      <p>Введите номер, чтобы добавить его к чеку</p>
+      <input id="modalGarageInput" class="modal-input" type="tel" inputmode="numeric" placeholder="Например: 1107" maxlength="5">
+      <div id="modalGarageError" class="modal-error"></div>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" class="modal-btn cancel">Отмена</button>
+        <button id="modalSaveBtn" class="modal-btn save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+  /* ============================================
+     БАЗОВАЯ "ЗАЩИТА" КОДА
+     ============================================ */
+  (function(){
+    document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'F12') { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key.toUpperCase())) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.key.toUpperCase() === 'U') { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.key.toUpperCase() === 'S') { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.key.toUpperCase() === 'A') { e.preventDefault(); return false; }
+    });
+    document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+    document.addEventListener('dragstart', function(e){ e.preventDefault(); });
+    setInterval(function(){ try { debugger; } catch(e){} }, 3000);
+  })();
+
+  /* ============================================
+     ОСНОВНАЯ ЛОГИКА САЙТА
+     ============================================ */
+  document.addEventListener('DOMContentLoaded', function() {
+    const demoScreen = document.getElementById('demoScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const selectorScreen = document.getElementById('selectorScreen');
+    const receiptPage = document.getElementById('receiptPage');
+    const payButton = document.getElementById('payButton');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const routeButtons = document.getElementById('routeButtons');
+    const routeTitle = document.getElementById('routeTitle');
+    const vehicleNumber = document.getElementById('vehicleNumber');
+    const payDate = document.getElementById('payDate');
+    const timerEl = document.getElementById('timer');
+    const qrBox = document.getElementById('qrBox');
+    const typeButtons = document.querySelectorAll('.type-btn');
+
+    payButton.addEventListener('click', function() {
+      payButton.disabled = true; payButton.style.opacity = '.65';
+      progressWrap.style.display = 'block';const stages = ['Подготовка…', 'Проверка данных…', 'Завершение…'];
+      let p = 0;
+      const iv = setInterval(function() {
+        p += 2; progressBar.style.width = p + '%';
+        progressText.textContent = stages[Math.min(2, Math.floor(p / 34))];
+        if (p >= 100) {
+          clearInterval(iv);
+          setTimeout(function() {
+            demoScreen.style.display = 'none';
+            resultScreen.classList.remove('hidden');
+            setTimeout(function() {
+              resultScreen.classList.add('hidden');
+              selectorScreen.classList.remove('hidden');
+            }, 1500);
+          }, 400);
+        }
+      }, 35);
+    });
+
+    const transportRoutes = { bus: ['18','1','10А','27','5','33','29','11'], trolleybus: ['3','6','4','10'] };
+    const typeLabels = { bus: 'Автобус', trolleybus: 'Троллейбус' };
+    let currentRoute = '10А', currentType = 'bus';
+
+    typeButtons.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        typeButtons.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        const type = btn.dataset.type;
+        routeButtons.innerHTML = '';
+        transportRoutes[type].forEach(function(num) {
+          const rb = document.createElement('button');
+          rb.className = 'route-btn';
+          rb.textContent = typeLabels[type] + ' ' + num;
+          rb.addEventListener('click', function() {
+            currentType = type; currentRoute = num;
+            routeTitle.textContent = typeLabels[type] + ': №' + num;
+            vehicleNumber.textContent = '—';
+            document.getElementById('openGarageModalBtn').textContent = 'Спросили т/с?';
+            selectorScreen.classList.add('hidden');
+            receiptPage.classList.remove('hidden');
+            payDate.textContent = formatMoscowDate(new Date());
+            window.__payTime = Date.now();
+            startElapsedTimer();
+            renderQR();
+          });
+          routeButtons.appendChild(rb);
+        });
+        routeButtons.classList.remove('hidden');
+      });
+    });
+
+    let timerInterval;
+    function startElapsedTimer() {
+      clearInterval(timerInterval);
+      const tick = function() {
+        const total = Math.floor((Date.now() - window.__payTime) / 1000);
+        const h = Math.floor(total / 3600);
+        const m = String(Math.floor((total % 3600) / 60)).padStart(2,'0');
+        const s = String(total % 60).padStart(2,'0');
+        timerEl.textContent = h + ':' + m + ':' + s;
+      };
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    function renderQR() {
+      qrBox.innerHTML = '';
+      const payload = 'PAYMENT|' + typeLabels[currentType] + ' ' + currentRoute + '|53RUB|TS:' + vehicleNumber.textContent + '|' + payDate.textContent;
+      if (window.QRCode) {
+        new QRCode(qrBox, { text: payload, width: 300, height: 300, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } else {
+        const c = document.createElement('canvas'); c.width = c.height = 300;
+        const ctx = c.getContext('2d'); const n = 33, cell = 300/n; let seed = 20261028;
+        const rand = function() { return (seed = (seed*1103515245+12345) & 0x7fffffff) / 0x7fffffff; };
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,300,300); ctx.fillStyle = '#111';
+        for (let y=0;y<n;y++) for (let x=0;x<n;x++) if (rand()>.5) ctx.fillRect(x*cell,y*cell,cell,cell);
+        qrBox.appendChild(c);
+      }
+    }
+
+    const garageModal = document.getElementById('garageModal');
     const garageInput = document.getElementById('modalGarageInput');
     const garageError = document.getElementById('modalGarageError');
     document.getElementById('openGarageModalBtn').addEventListener('click', function() {

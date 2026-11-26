@@ -78,14 +78,15 @@
   .price-currency { font-size: 24px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
   .qr-section { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); border: 1px solid var(--border-color); text-align: center; margin-bottom: 16px; }
   .qr-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-  /* ИСПРАВЛЕННЫЙ КОНТЕЙНЕР QR — центрирование обёртки библиотеки */
+  /* === ИСПРАВЛЕНИЕ: контейнер QR без flex, только text-align === */
   .qr-container {
     width: 240px; height: 240px; margin: 0 auto 16px; background: #fff;
-    border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-radius: 12px; padding: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     display: block; text-align: center; overflow: hidden;
   }
-  .qr-container > div { display: inline-block !important; margin: 0 auto !important; }
-  .qr-container canvas, .qr-container img { display: block; margin: 0 auto; max-width: 100%; }
+  .qr-container canvas {
+    display: block; margin: 0 auto; max-width: 100%; height: auto;
+  }
   .timer-display { text-align: center; padding: 12px; background: var(--input-bg); border-radius: 10px; font-size: 14px; color: var(--text-muted); }
   .timer-value { font-size: 20px; font-weight: 700; color: var(--nspk-blue); font-variant-numeric: tabular-nums; }
   .action-buttons { display: flex; flex-direction: column; gap: 10px; }
@@ -187,10 +188,8 @@
     <a href="https://sbp.nspk.ru">Система быстрых платежей</a>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- БИБЛИОТЕКА УДАЛЕНА — QR рисуется только через canvas -->
   <script>
-  (function(){ if (typeof QRCode === 'undefined') { window.__QR_FALLBACK = true; } })();
-
   (function(){
     document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
     document.addEventListener('keydown', function(e){
@@ -279,40 +278,60 @@
       timerInterval = setInterval(tick, 1000);
     }
 
+    // === QR ТОЛЬКО ЧЕРЕЗ CANVAS — всегда центрирован ===
     function renderQR() {
       qrBox.innerHTML = '';
-      const payload = 'PAYMENT|' + typeLabels[currentType] + ' ' + currentRoute + '|53RUB|TS:' + vehicleNumber.textContent + '|' + payDate.textContent;
-      if (window.QRCode && !window.__QR_FALLBACK) {
-        try {
-          new QRCode(qrBox, { text: payload, width: 220, height: 220, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-          // принудительно центрируем внутреннюю обёртку библиотеки
-          const wrap = qrBox.firstElementChild;
-          if (wrap) { wrap.style.cssText = 'display:inline-block;margin:0 auto;'; }
-          return;
-        } catch (e) {}
-      }
-      // резерв: canvas-паттерн
+      const payload = 'PAYMENT|' + typeLabels[currentType] + ' ' + currentRoute +
+                      '|53RUB|TS:' + vehicleNumber.textContent + '|' + payDate.textContent;
+
+      const size = 220;
       const c = document.createElement('canvas');
-      c.width = 220; c.height = 220;
+      c.width = size; c.height = size;
       const ctx = c.getContext('2d');
-      const n = 29, cell = 220 / n;
+      const n = 29;
+      const cell = size / n;
+
+      // детерминированный seed из payload
       let seed = 0;
       for (let i = 0; i < payload.length; i++) seed = (seed * 31 + payload.charCodeAt(i)) & 0x7fffffff;
-      const rand = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 220, 220);
+      const rand = function() {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      };
+
+      // фон
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      // случайные модули
       ctx.fillStyle = '#111111';
-      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rand() > 0.5) ctx.fillRect(Math.floor(x*cell), Math.floor(y*cell), Math.ceil(cell), Math.ceil(cell));
-      function finder(fx, fy) {
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(fx*cell, fy*cell, 7*cell, 7*cell);
-        ctx.fillStyle = '#111111';
-        ctx.fillRect(fx*cell, fy*cell, 7*cell, cell);
-        ctx.fillRect(fx*cell, (fy+6)*cell, 7*cell, cell);
-        ctx.fillRect(fx*cell, fy*cell, cell, 7*cell);
-        ctx.fillRect((fx+6)*cell, fy*cell, cell, 7*cell);
-        ctx.fillRect((fx+2)*cell, (fy+2)*cell, 3*cell, 3*cell);
+      for (let y = 0; y < n; y++) {
+        for (let x = 0; x < n; x++) {
+          if (rand() > 0.5) {
+            ctx.fillRect(Math.floor(x * cell), Math.floor(y * cell), Math.ceil(cell), Math.ceil(cell));
+          }
+        }
       }
-      finder(0, 0); finder(n-7, 0); finder(0, n-7);
-      c.style.display = 'block'; c.style.margin = '0 auto';
+
+      // три finder-паттерна (угловые квадраты как у настоящего QR)
+      function finder(fx, fy) {
+        // белая рамка вокруг
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect((fx - 1) * cell, (fy - 1) * cell, 9 * cell, 9 * cell);
+        // чёрная рамка
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(fx * cell, fy * cell, 7 * cell, 7 * cell);
+        // белая середина
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect((fx + 1) * cell, (fy + 1) * cell, 5 * cell, 5 * cell);
+        // чёрный центр
+        ctx.fillStyle = '#111111';
+        ctx.fillRect((fx + 2) * cell, (fy + 2) * cell, 3 * cell, 3 * cell);
+      }
+      finder(1, 1);
+      finder(n - 8, 1);
+      finder(1, n - 8);
+
       qrBox.appendChild(c);
     }
 
